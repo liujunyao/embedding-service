@@ -52,13 +52,12 @@ install_deps() {
 
     # 检测 CUDA 并安装 torch
     DEP_GROUP=$(check_cuda)
-    echo "Installing torch $TORCH_VERSION for $DEP_GROUP..."
-    uv pip install "torch==$TORCH_VERSION" "torchvision==0.17.0" "torchaudio==2.2.0" \
-        --index-url https://download.pytorch.org/whl/cpu
-
-    # 安装其他依赖
-    echo "Installing other dependencies..."
-    uv pip install fastapi>=0.104.0 uvicorn>=0.24.0 sentence-transformers>=2.7.0 pydantic>=2.5.0
+    echo "Installing dependencies and torch $TORCH_VERSION for $DEP_GROUP..."
+    if [ "$DEP_GROUP" = "cpu" ]; then
+        uv pip install .[cpu] --index-url https://download.pytorch.org/whl/$DEP_GROUP
+    else
+        uv pip install .[gpu] --index-url https://download.pytorch.org/whl/$DEP_GROUP
+    fi
 }
 
 # 函数：验证安装
