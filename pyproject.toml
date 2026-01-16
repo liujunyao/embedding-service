@@ -21,7 +21,12 @@ cpu = [
     "numpy==1.26.4",
 ]
 gpu = [
-    "torch>=2.2.0",
-    "torchvision>=0.17.0",
-    "torchaudio>=2.2.0",
+    "torch==2.8.0",
+    "torchvision>=0.23.0",
+    "torchaudio>=2.8.0",
+]
+# 量化依赖（可选，仅在启用 8-bit 量化时需要）
+quantization = [
+    "accelerate>=0.26.0",
+    "bitsandbytes>=0.41.0",
 ]
