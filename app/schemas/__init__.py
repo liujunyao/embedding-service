@@ -56,3 +56,40 @@ class ModelStatusResponse(BaseModel):
 
 
 ModelStatus = Literal["unloaded", "loading", "loaded", "failed"]
+
+
+# ===================== Rerank 相关模型 =====================
+class RerankDocument(BaseModel):
+    """Rerank 文档"""
+    text: str = Field(..., description="文档内容")
+    metadata: Optional[Dict] = Field(default=None, description="文档元数据")
+
+
+class RerankRequest(BaseModel):
+    """Rerank 请求参数"""
+    model: str = Field(default="bge-reranker-base", description="Reranker 模型名")
+    query: str = Field(..., description="查询文本")
+    documents: List[Union[str, RerankDocument]] = Field(..., description="待排序的文档列表")
+    top_n: Optional[int] = Field(default=None, description="返回前 N 个结果")
+    return_documents: bool = Field(default=True, description="是否返回文档内容")
+
+
+class RerankResult(BaseModel):
+    """单个 Rerank 结果"""
+    index: int = Field(..., description="文档在原始列表中的索引")
+    relevance_score: float = Field(..., description="相关性分数")
+    document: Optional[Union[str, Dict]] = Field(default=None, description="文档内容")
+
+
+class RerankResponse(BaseModel):
+    """Rerank 响应"""
+    object: str = "list"
+    results: List[RerankResult]
+    model: str
+    usage: dict = Field(
+        default_factory=lambda: {
+            "prompt_tokens": 0,
+            "total_tokens": 0
+        }
+    )
+

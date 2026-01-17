@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 import uvicorn
 
-from app.routes import models, embeddings, health
+from app.routes import models, embeddings, health, rerank
 from app.core.model_manager import restore_models_on_startup, save_model_state
 from app.core.config import SERVICE_HOST, SERVICE_PORT, SERVICE_WORKERS
 
@@ -36,6 +36,7 @@ app = FastAPI(
 app.include_router(embeddings.router)
 app.include_router(models.router)
 app.include_router(health.router)
+app.include_router(rerank.router)
 
 
 # ===================== 根路径 =====================
@@ -51,7 +52,9 @@ async def root():
             "embeddings": "/v1/embeddings",
             "models": "/v1/models",
             "model_status": "/v1/models/status",
-            "load_models": "/v1/models/load"
+            "load_models": "/v1/models/load",
+            "rerank": "/v1/rerank",
+            "rerank_models": "/v1/rerank/models"
         }
     }
 

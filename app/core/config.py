@@ -19,6 +19,14 @@ SUPPORTED_MODELS: Dict[str, Tuple[str, bool, int]] = {
     "all-MiniLM-L6-v2": ("sentence-transformers/all-MiniLM-L6-v2", True, 384),
 }
 
+# Reranker 模型配置
+SUPPORTED_RERANKERS: Dict[str, Tuple[str, bool]] = {
+    # 模型别名: (Hugging Face 路径, 是否支持量化)
+    "bge-reranker-base": ("BAAI/bge-reranker-base", True),
+    "bge-reranker-large": ("BAAI/bge-reranker-large", True),
+    "bge-reranker-v2-m3": ("BAAI/bge-reranker-v2-m3", True),
+}
+
 # ===================== 量化配置 =====================
 # 设置为 False 禁用量化（使用 FP16），True 启用 8-bit 量化
 ENABLE_QUANTIZATION = True
