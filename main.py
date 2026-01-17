@@ -6,8 +6,8 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 import uvicorn
 
-from app.routes import models, embeddings, health, rerank
-from app.core.model_manager import restore_models_on_startup, save_model_state
+from app.routes import embeddings, health, rerank
+from app.services import EmbeddingService, RerankService
 from app.core.config import SERVICE_HOST, SERVICE_PORT, SERVICE_WORKERS
 
 
@@ -17,24 +17,31 @@ async def lifespan(app: FastAPI):
     """服务生命周期管理（替代 on_event）"""
     # 启动时执行
     print("\n=== 服务启动 ===")
-    restore_models_on_startup()
+
+    # 初始化 Embedding 服务
+    app.state.embedding_service = EmbeddingService(model_name="bge-base-zh-v1.5")
+
+    # 初始化 Rerank 服务
+    app.state.rerank_service = RerankService(model_name="bge-reranker-base")
+
+    print("\n✓ 所有服务初始化完成")
+
     yield
+
     # 关闭时执行
     print("\n=== 服务关闭 ===")
-    save_model_state()
 
 
 # ===================== 创建应用 =====================
 app = FastAPI(
     title="OpenAI-Compatible Embedding Service",
-    version="2.0",
-    description="模块化嵌入向量生成服务，支持多模型管理",
+    version="3.0",
+    description="简化架构的嵌入向量和重排序服务",
     lifespan=lifespan
 )
 
 # ===================== 注册路由 =====================
 app.include_router(embeddings.router)
-app.include_router(models.router)
 app.include_router(health.router)
 app.include_router(rerank.router)
 
@@ -45,16 +52,12 @@ async def root():
     """API 根路径"""
     return {
         "service": "OpenAI-Compatible Embedding Service",
-        "version": "2.0",
+        "version": "3.0",
         "docs": "/docs",
         "health": "/health",
         "endpoints": {
             "embeddings": "/v1/embeddings",
-            "models": "/v1/models",
-            "model_status": "/v1/models/status",
-            "load_models": "/v1/models/load",
-            "rerank": "/v1/rerank",
-            "rerank_models": "/v1/rerank/models"
+            "rerank": "/v1/rerank"
         }
     }
 

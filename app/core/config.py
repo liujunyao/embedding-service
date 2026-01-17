@@ -2,11 +2,6 @@
 配置管理模块
 """
 from typing import Dict, Tuple
-from pathlib import Path
-
-# ===================== 路径配置 =====================
-# 项目根目录（main.py 所在目录）
-PROJECT_ROOT = Path(__file__).parent.parent.parent
 
 # ===================== 模型配置 =====================
 SUPPORTED_MODELS: Dict[str, Tuple[str, bool, int]] = {
@@ -30,9 +25,6 @@ SUPPORTED_RERANKERS: Dict[str, Tuple[str, bool]] = {
 # ===================== 量化配置 =====================
 # 设置为 False 禁用量化（使用 FP16），True 启用 8-bit 量化
 ENABLE_QUANTIZATION = True
-
-# ===================== 持久化配置 =====================
-MODEL_STATE_FILE = str(PROJECT_ROOT / "model_state.json")  # 使用绝对路径
 
 # ===================== 服务配置 =====================
 SERVICE_HOST = "0.0.0.0"
