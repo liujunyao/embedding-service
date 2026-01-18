@@ -17,7 +17,7 @@ from app.core.config import SUPPORTED_MODELS, ENABLE_QUANTIZATION
 class EmbeddingService:
     """Embedding 服务,应用初始化时创建单例"""
 
-    def __init__(self, model_name: str = "bge-base-zh-v1.5"):
+    def __init__(self, model_name: str = "bge-m3"):
         """
         初始化 Embedding 服务
 
@@ -48,17 +48,17 @@ class EmbeddingService:
 
         model_kwargs = {"device": self.device}
 
-        # 量化配置
-        if self.device == "cuda" and ENABLE_QUANTIZATION and self.enable_quant:
-            try:
-                from transformers import BitsAndBytesConfig
-                print(f"量化: 8-bit")
-                quantization_config = BitsAndBytesConfig(load_in_8bit=True)
-                model_kwargs["model_kwargs"] = {"quantization_config": quantization_config}
-            except ImportError as e:
-                print(f"⚠️ 量化依赖缺失,回退到 FP16: {e}")
-        else:
-            print(f"量化: 禁用")
+        # # 量化配置
+        # if self.device == "cuda" and ENABLE_QUANTIZATION and self.enable_quant:
+        #     try:
+        #         from transformers import BitsAndBytesConfig
+        #         print(f"量化: 8-bit")
+        #         quantization_config = BitsAndBytesConfig(load_in_8bit=True)
+        #         model_kwargs["model_kwargs"] = {"quantization_config": quantization_config}
+        #     except ImportError as e:
+        #         print(f"⚠️ 量化依赖缺失,回退到 FP16: {e}")
+        # else:
+        #     print(f"量化: 禁用")
 
         try:
             self.model = SentenceTransformer(self.model_path, **model_kwargs)

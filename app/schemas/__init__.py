@@ -93,3 +93,40 @@ class RerankResponse(BaseModel):
         }
     )
 
+
+# ===================== 批量 Rerank 相关模型 =====================
+class BatchRerankQuery(BaseModel):
+    """批量 Rerank 中的单个查询"""
+    query: str = Field(..., description="查询文本")
+    documents: List[Union[str, RerankDocument]] = Field(..., description="待排序的文档列表")
+    top_n: Optional[int] = Field(default=None, description="返回前 N 个结果")
+
+
+class BatchRerankRequest(BaseModel):
+    """批量 Rerank 请求参数"""
+    model: str = Field(default="bge-reranker-base", description="Reranker 模型名")
+    queries: List[BatchRerankQuery] = Field(..., description="查询列表，每个查询包含文档列表")
+    return_documents: bool = Field(default=True, description="是否返回文档内容")
+
+
+class BatchRerankQueryResult(BaseModel):
+    """批量 Rerank 中单个查询的结果"""
+    query_index: int = Field(..., description="查询在请求列表中的索引")
+    query: str = Field(..., description="查询文本")
+    results: List[RerankResult] = Field(..., description="该查询的重排序结果")
+
+
+class BatchRerankResponse(BaseModel):
+    """批量 Rerank 响应"""
+    object: str = "batch_rerank"
+    data: List[BatchRerankQueryResult] = Field(..., description="每个查询的重排序结果")
+    model: str
+    usage: dict = Field(
+        default_factory=lambda: {
+            "prompt_tokens": 0,
+            "total_tokens": 0,
+            "query_count": 0,
+            "document_count": 0
+        }
+    )
+

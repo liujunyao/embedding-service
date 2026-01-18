@@ -48,17 +48,17 @@ class RerankService:
 
         model_kwargs = {"device": self.device}
 
-        # 量化配置
-        if self.device == "cuda" and ENABLE_QUANTIZATION and self.enable_quant:
-            try:
-                from transformers import BitsAndBytesConfig
-                print(f"量化: 8-bit")
-                quantization_config = BitsAndBytesConfig(load_in_8bit=True)
-                model_kwargs["model_kwargs"] = {"quantization_config": quantization_config}
-            except ImportError as e:
-                print(f"⚠️ 量化依赖缺失,回退到 FP16: {e}")
-        else:
-            print(f"量化: 禁用")
+        # # 量化配置
+        # if self.device == "cuda" and ENABLE_QUANTIZATION and self.enable_quant:
+        #     try:
+        #         from transformers import BitsAndBytesConfig
+        #         print(f"量化: 8-bit")
+        #         quantization_config = BitsAndBytesConfig(load_in_8bit=True)
+        #         model_kwargs["model_kwargs"] = {"quantization_config": quantization_config}
+        #     except ImportError as e:
+        #         print(f"⚠️ 量化依赖缺失,回退到 FP16: {e}")
+        # else:
+        #     print(f"量化: 禁用")
 
         try:
             self.model = CrossEncoder(self.model_path, **model_kwargs)
@@ -100,3 +100,62 @@ class RerankService:
             )
 
         return scores
+
+    def predict_batch(
+        self,
+        queries_docs: List[tuple[str, List[str]]]
+    ) -> List[np.ndarray]:
+        """
+        批量计算多个查询与文档的相关性分数 (线程安全，高效)
+
+        Args:
+            queries_docs: 查询-文档对列表，每个元素为 (query, [doc1, doc2, ...])
+
+        Returns:
+            List[np.ndarray]: 每个查询的相关性分数数组列表
+
+        Example:
+            >>> queries_docs = [
+            ...     ("什么是AI？", ["AI是...", "天气很好"]),
+            ...     ("如何学Python？", ["Python是...", "香蕉很甜"])
+            ... ]
+            >>> scores_list = service.predict_batch(queries_docs)
+            >>> # scores_list[0] 是第一个查询的分数，shape=(2,)
+            >>> # scores_list[1] 是第二个查询的分数，shape=(2,)
+        """
+        if not queries_docs:
+            raise ValueError("查询列表不能为空")
+
+        # 构建所有查询-文档对
+        all_pairs = []
+        pair_indices = []  # 记录每对属于哪个查询
+
+        for query_idx, (query, documents) in enumerate(queries_docs):
+            if not documents:
+                raise ValueError(f"查询 {query_idx} 的文档列表不能为空")
+
+            for doc in documents:
+                all_pairs.append([query, doc])
+                pair_indices.append(query_idx)
+
+        # 使用线程锁保证并发安全，一次性计算所有分数（批处理）
+        with self.lock:
+            all_scores = self.model.predict(
+                all_pairs,
+                batch_size=32,
+                show_progress_bar=False,
+                convert_to_numpy=True,
+                num_workers=0
+            )
+
+        # 按查询分组结果
+        results = []
+        for query_idx, (query, documents) in enumerate(queries_docs):
+            # 找到属于当前查询的分数
+            query_scores = [
+                score for pair_idx, score in enumerate(all_scores)
+                if pair_indices[pair_idx] == query_idx
+            ]
+            results.append(np.array(query_scores))
+
+        return results
